@@ -1,56 +1,81 @@
 const http = require('http');
 const sqlite3 = require("sqlite3");
-const url = require("url");
+
+//Set mode of URLS
+//Pretty - http://example.com/alias/{z}/{x}/{y}
+const mode = "pretty";
+//Argument - http://example.com?db=alias&z={z}&x={x}&y={y}
+// const mode = "argument";
+let url;
+const port = 8080;
+
 const databases = {
     ski: {
-        alias: "ski",
         filePath: "ski.mbt"
     }
+
 };
+
+if (mode == "argument") {
+    url = require("url");
+}
+
 let databaseAlias = Object.keys(databases);
 databaseAlias.forEach(element => {
-    databases[element].db = new sqlite3.Database(databases[element].filePath, sqlite3.OPEN_READONLY, (err) => {});
+    databases[element].db = new sqlite3.Database(databases[element].filePath, sqlite3.OPEN_READONLY, (err) => {
+        if (err){
+            console.log("Failed to load: " + databases[element].filePath);
+        throw err;}
+    });
 });
 
 
 const requestListener = function (req, res) {
-
-    //Argument mode - Uncoment rows below for argument mode and comment pretty mode
-    // const queryObject = url.parse(req.url, true).query;
-    // let z = parseInt(queryObject.z);
-    // let x = parseInt(queryObject.x);
-    // let y = parseInt(queryObject.y);
-    // let dbAlias = queryObject.db.split(".")[0];
+    let dbAlias;
+    let z;
+    let x;
+    let y;
+    //Argument mode - Slower, but compatible with non pretty PHP urls
+    if (mode == "argument") {
+        const queryObject = url.parse(req.url, true).query;
+            z = (queryObject.z ? parseInt(queryObject.z) : undefined);
+            x = (queryObject.x ? parseInt(queryObject.x) : undefined);
+            y = (queryObject.y ? parseInt(queryObject.y) : undefined);
+            dbAlias = (queryObject.db ? queryObject.db.split(".")[0] : undefined);
+    }
     //End argument mode
 
-    //Pretty mode - Uncoment rows below for prettymode and coment above
-    args = parseUrl(req.url);
-    let dbAlias = args[1];
-    let z = parseInt(args[2]);
-    let x = parseInt(args[3]);
-    let y = parseInt(args[4]);
+    //Pretty mode - Faster and better to use if it is a new initiation. 
+    else if (mode == "pretty") {
+        args = parseUrl(req.url);
+        dbAlias = args[1];
+        z = (args[2] ? parseInt(args[2]) : undefined);
+        x = (args[3] ? parseInt(args[3]) : undefined);
+        y = (args[4] ? parseInt(args[4]) : undefined);
+    }
     //End prettymode
 
     if (databaseAlias.includes(dbAlias) && typeof z == "number" && typeof x == "number" && typeof y == "number") {
-        
+
         databases[dbAlias].db.get(`SELECT * FROM tiles WHERE zoom_level = ${z} AND tile_column = ${x} AND tile_row = ${y}`, (err, row) => {
             if (err || row == undefined) {
                 res.writeHead(404);
                 res.end();
             } else {
                 res.writeHead(200);
-                res.end(row.tile_data);
+                res.end(row.tile_data, {
+                    "Content-Type": "image/png"
+                });
             }
         });
-    }
-    else {
+    } else {
         res.writeHead(400);
         res.end()
     }
 }
 
 const server = http.createServer(requestListener);
-server.listen(8080);
+server.listen(port);
 
 function parseUrl(url) {
     return url.split("/");
