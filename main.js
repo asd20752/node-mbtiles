@@ -12,6 +12,9 @@ const databases = {
     ski: {
         filePath: "ski.mbt"
     }
+    // , otherMap: {
+    //     filePath: "otherMap.mbtiles"
+    // }
 
 };
 process.argv.forEach(function (val, index, array) {
@@ -25,9 +28,10 @@ if (mode == "argument") {
 let databaseAlias = Object.keys(databases);
 databaseAlias.forEach(element => {
     databases[element].db = new sqlite3.Database(databases[element].filePath, sqlite3.OPEN_READONLY, (err) => {
-        if (err){
+        if (err) {
             console.log("Failed to load: " + databases[element].filePath);
-        throw err;}
+            throw err;
+        }
     });
 });
 
@@ -40,10 +44,10 @@ const requestListener = function (req, res) {
     //Argument mode - Slower, but compatible with non pretty PHP urls
     if (mode == "argument") {
         const queryObject = url.parse(req.url, true).query;
-            z = (queryObject.z ? parseInt(queryObject.z) : undefined);
-            x = (queryObject.x ? parseInt(queryObject.x) : undefined);
-            y = (queryObject.y ? parseInt(queryObject.y) : undefined);
-            dbAlias = (queryObject.db ? queryObject.db.split(".")[0] : undefined);
+        z = (queryObject.z ? parseInt(queryObject.z) : undefined);
+        x = (queryObject.x ? parseInt(queryObject.x) : undefined);
+        y = (queryObject.y ? parseInt(queryObject.y) : undefined);
+        dbAlias = (queryObject.db ? queryObject.db.split(".")[0] : undefined);
     }
     //End argument mode
 
@@ -79,6 +83,7 @@ const requestListener = function (req, res) {
 const server = http.createServer(requestListener);
 server.listen(port);
 console.log("Listening for connections on port: " + port);
+
 function parseUrl(url) {
     return url.split("/");
 }
