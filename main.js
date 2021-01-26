@@ -7,15 +7,17 @@ const mode = "pretty";
 //Argument - http://example.com?db=alias&z={z}&x={x}&y={y}
 // const mode = "argument";
 let url;
-const port = 8080;
-
+let port = 5000;
 const databases = {
     ski: {
         filePath: "ski.mbt"
     }
 
 };
-
+process.argv.forEach(function (val, index, array) {
+    if (val == "-p")
+        port = process.argv[index + 1];
+});
 if (mode == "argument") {
     url = require("url");
 }
@@ -76,7 +78,7 @@ const requestListener = function (req, res) {
 
 const server = http.createServer(requestListener);
 server.listen(port);
-
+console.log("Listening for connections on port: " + port);
 function parseUrl(url) {
     return url.split("/");
 }
