@@ -9,6 +9,8 @@
   "author": "Adrian B. Hoffsten",
   "license": "ISC",
   "dependencies": {
+    "morgan": "^1.10.0",
+    "source-configs": "^0.3.6",
     "sqlite3": "^5.0.0"
   }
 }
